@@ -430,15 +430,6 @@ void MainWindow::setupUi() {
 	actionClearList = new QAction(this);
 	actionClearList->setObjectName(QString::fromUtf8("actionClearList"));
 
-	auto treeDock = new KDDockWidgets::DockWidget(QStringLiteral("Tree View"));
-	tabWidget = new QTabWidget(treeDock);
-	tabWidget->setObjectName(QString::fromUtf8("tabWidget"));
-	tabWidget->setStyleSheet(QString::fromUtf8("QTabWidget::pane { border: 0; }"));
-	tabWidget->setTabsClosable(true);
-	tabWidget->setMovable(true);
-	treeDock->setWidget(tabWidget);
-	addDockWidget(treeDock, KDDockWidgets::Location_OnRight);
-
 	menuBar = new QMenuBar(this);
 	menuBar->setObjectName(QString::fromUtf8("menuBar"));
 	menuBar->setGeometry(QRect(0, 0, 640, 25));
@@ -589,9 +580,6 @@ void MainWindow::setupUi() {
 	QObject::connect(reportDockWidget, SIGNAL(visibilityChanged(bool)), actionReports, SLOT(setChecked(bool)));
 	QObject::connect(actionEditToolBar, SIGNAL(toggled(bool)), editToolBar, SLOT(setVisible(bool)));
 	QObject::connect(editToolBar, SIGNAL(visibilityChanged(bool)), actionEditToolBar, SLOT(setChecked(bool)));
-
-	tabWidget->setCurrentIndex(-1);
-
 
 	QMetaObject::connectSlotsByName(this);
 } // setupUi
@@ -989,32 +977,32 @@ void MainWindow::setupActions()
     // QTBUG-15746: QKeySequence::PreviousChild does not work.
     prevTab->setShortcut(Qt::CTRL | Qt::Key_Backtab);
 
-	tabWidget->addAction(closeCurrentTab);
-	tabWidget->addAction(nextTab);
-	tabWidget->addAction(prevTab);
+//	tabWidget->addAction(closeCurrentTab);
+//	tabWidget->addAction(nextTab);
+//	tabWidget->addAction(prevTab);
 
-    auto switchTab = [this](bool toNext) {
-		int numTabs = tabWidget->count();
-        if (!numTabs)
-            return;
-		int currentIndex = tabWidget->currentIndex();
-        int nextIndex = [currentIndex, numTabs, toNext] {
-            int ret = currentIndex + (toNext ? 1 : -1);
-            if (ret < 0)
-                return numTabs - 1;
-            if (ret >= numTabs)
-                return 0;
-            return ret;
-        }();
-		tabWidget->setCurrentIndex(nextIndex);
-    };
+//    auto switchTab = [this](bool toNext) {
+//		int numTabs = tabWidget->count();
+//        if (!numTabs)
+//            return;
+//		int currentIndex = tabWidget->currentIndex();
+//        int nextIndex = [currentIndex, numTabs, toNext] {
+//            int ret = currentIndex + (toNext ? 1 : -1);
+//            if (ret < 0)
+//                return numTabs - 1;
+//            if (ret >= numTabs)
+//                return 0;
+//            return ret;
+//        }();
+//		tabWidget->setCurrentIndex(nextIndex);
+//    };
 
-	connect(closeCurrentTab, &QAction::triggered, tabWidget,
-			[this] { MainWindow::closeTab(tabWidget->currentIndex()); });
-	connect(nextTab, &QAction::triggered, tabWidget,
-            [switchTab] { switchTab(true); });
-	connect(prevTab, &QAction::triggered, tabWidget,
-            [switchTab] { switchTab(false); });
+//	connect(closeCurrentTab, &QAction::triggered, tabWidget,
+//			[this] { MainWindow::closeTab(tabWidget->currentIndex()); });
+//	connect(nextTab, &QAction::triggered, tabWidget,
+//            [switchTab] { switchTab(true); });
+//	connect(prevTab, &QAction::triggered, tabWidget,
+//            [switchTab] { switchTab(false); });
 }
 
 void MainWindow::setupConnections()
@@ -1023,8 +1011,8 @@ void MainWindow::setupConnections()
             &MainWindow::activateModelTree);
 	connect(reportTree, &QTreeView::activated, this,
             &MainWindow::activateReportTree);
-	connect(tabWidget, &QTabWidget::tabCloseRequested, this,
-            &MainWindow::closeTab);
+//	connect(tabWidget, &QTabWidget::tabCloseRequested, this,
+//            &MainWindow::closeTab);
 
 	connect(actionSettings, &QAction::triggered, this, [this] {
         SettingsDialog dialog(m_settings, this);
@@ -1091,7 +1079,9 @@ void MainWindow::savePreferences()
 
 void MainWindow::setupStartPage()
 {
-    auto *startPage = new StartPage(this);
+	auto* dock = new KDDockWidgets::DockWidget(QStringLiteral("StartPage"));
+
+	auto *startPage = new StartPage(dock);
     QString examplesDir =
         QString::fromStdString(env::install_dir() + "/share/scram/input");
     startPage->exampleModelsButton->setEnabled(QDir(examplesDir).exists());
@@ -1101,8 +1091,11 @@ void MainWindow::setupStartPage()
 			actionOpenFiles, &QAction::trigger);
     connect(startPage->exampleModelsButton, &QAbstractButton::clicked, this,
             [this, examplesDir] { openFiles(examplesDir); });
-	tabWidget->addTab(startPage, startPage->windowIcon(),
-                          startPage->windowTitle());
+
+	dock->setTitle(startPage->windowTitle());
+	dock->setIcon(startPage->windowIcon());
+	dock->setWidget(startPage);
+	addDockWidget(dock, KDDockWidgets::Location_OnRight);
 
     startPage->recentFilesBox->setVisible(
         m_recentFileActions.front()->isVisible());
@@ -1270,19 +1263,19 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::closeTab(int index)
 {
-    if (index < 0)
-        return;
-    // Ensure show/hide order.
-	if (index == tabWidget->currentIndex()) {
-		int num_tabs = tabWidget->count();
-        if (num_tabs > 1) {
-			tabWidget->setCurrentIndex(index == (num_tabs - 1) ? index - 1
-                                                                   : index + 1);
-        }
-    }
-	auto *widget = tabWidget->widget(index);
-	tabWidget->removeTab(index);
-    delete widget;
+//    if (index < 0)
+//        return;
+//    // Ensure show/hide order.
+//	if (index == tabWidget->currentIndex()) {
+//		int num_tabs = tabWidget->count();
+//        if (num_tabs > 1) {
+//			tabWidget->setCurrentIndex(index == (num_tabs - 1) ? index - 1
+//                                                                   : index + 1);
+//        }
+//    }
+//	auto *widget = tabWidget->widget(index);
+//	tabWidget->removeTab(index);
+//    delete widget;
 }
 
 void MainWindow::runAnalysis()
@@ -1992,11 +1985,11 @@ QAbstractItemView *MainWindow::constructElementTable<model::GateContainerModel>(
 
 void MainWindow::resetModelTree()
 {
-	while (tabWidget->count()) {
-		auto *widget = tabWidget->widget(0);
-		tabWidget->removeTab(0);
-        delete widget;
-    }
+//	while (tabWidget->count()) {
+//		auto *widget = tabWidget->widget(0);
+//		tabWidget->removeTab(0);
+//        delete widget;
+//    }
     m_guiModel = std::make_unique<model::Model>(m_model.get());
 	auto *oldModel = modelTree->model();
 	modelTree->setModel(new ModelTree(m_guiModel.get(), this));
@@ -2008,13 +2001,14 @@ void MainWindow::resetModelTree()
 }
 
 bool MainWindow::activateTab(const QString& title) {
-	for (int i=0; i < tabWidget->count(); i++) {
-		if (tabWidget->tabText(i) == title) {
-			tabWidget->setCurrentIndex(i);
-			return true;
-		}
-	}
 	return false;
+//	for (int i=0; i < tabWidget->count(); i++) {
+//		if (tabWidget->tabText(i) == title) {
+//			tabWidget->setCurrentIndex(i);
+//			return true;
+//		}
+//	}
+//	return false;
 }
 
 void MainWindow::activateModelTree(const QModelIndex &index)
@@ -2026,35 +2020,41 @@ void MainWindow::activateModelTree(const QModelIndex &index)
 			const auto title = _("Gates");
 			if (activateTab(title))
 				return;
+			auto* dock = new KDDockWidgets::DockWidget(uniqueName());
             auto *table = constructElementTable<model::GateContainerModel>(
-                m_guiModel.get(), this);
+				m_guiModel.get(), dock);
             //: The tab for the table of gates.
-			tabWidget->addTab(table, title);
-			tabWidget->setCurrentWidget(table);
+			dock->setTitle(title);
+			dock->setWidget(table);
+			addDockWidget(dock, KDDockWidgets::Location_OnRight);
             return;
         }
         case ModelTree::Row::BasicEvents: {
 			const auto title = _("Basic Events");
 			if (activateTab(title))
 				return;
+			auto* dock = new KDDockWidgets::DockWidget(uniqueName());
             auto *table =
                 constructElementTable<model::BasicEventContainerModel>(
-                    m_guiModel.get(), this);
-            //: The tab for the table of basic events.
-			tabWidget->addTab(table, title);
-			tabWidget->setCurrentWidget(table);
+					m_guiModel.get(), dock);
+            //: The tab for the table of basic events.	
+			dock->setTitle(title);
+			dock->setWidget(table);
+			addDockWidget(dock, KDDockWidgets::Location_OnRight);
             return;
         }
         case ModelTree::Row::HouseEvents: {
 			const auto title = _("House Events");
 			if (activateTab(title))
 				return;
+			auto* dock = new KDDockWidgets::DockWidget(uniqueName());
             auto *table =
                 constructElementTable<model::HouseEventContainerModel>(
-                    m_guiModel.get(), this);
+					m_guiModel.get(), dock);
             //: The tab for the table of house events.
-			tabWidget->addTab(table, title);
-			tabWidget->setCurrentWidget(table);
+			dock->setTitle(title);
+			dock->setWidget(table);
+			addDockWidget(dock, KDDockWidgets::Location_OnRight);
             return;
         }
         case ModelTree::Row::FaultTrees:
@@ -2091,9 +2091,12 @@ void MainWindow::activateReportTree(const QModelIndex &index)
 		if (activateTab(title))
 			return;
         bool withProbability = result.probability_analysis != nullptr;
-        auto *table = constructTableView<model::ProductTableModel>(
-            this, result.fault_tree_analysis->products(), withProbability);
-		tabWidget->addTab(table, title);
+		auto* dock = new KDDockWidgets::DockWidget(uniqueName());
+		auto* table = constructTableView<model::ProductTableModel>(
+			dock, result.fault_tree_analysis->products(), withProbability);
+		dock->setTitle(title);
+		dock->setWidget(table);
+		addDockWidget(dock, KDDockWidgets::Location_OnRight);
         table->sortByColumn(withProbability ? 2 : 1, withProbability
                                                          ? Qt::DescendingOrder
                                                          : Qt::AscendingOrder);
@@ -2107,9 +2110,12 @@ void MainWindow::activateReportTree(const QModelIndex &index)
 		const auto title = _("Importance: %1").arg(name);
 		if (activateTab(title))
 			return;
+		auto* dock = new KDDockWidgets::DockWidget(uniqueName());
         widget = constructTableView<model::ImportanceTableModel>(
-            this, &result.importance_analysis->importance());
-		tabWidget->addTab(widget, title);
+			dock, &result.importance_analysis->importance());
+		dock->setTitle(title);
+		dock->setWidget(widget);
+		addDockWidget(dock, KDDockWidgets::Location_OnRight);
         break;
     }
     default:
@@ -2118,9 +2124,8 @@ void MainWindow::activateReportTree(const QModelIndex &index)
 
     if (!widget)
         return;
-	tabWidget->setCurrentWidget(widget);
-	connect(reportTree->model(), &QObject::destroyed, widget,
-			[this, widget] { closeTab(tabWidget->indexOf(widget)); });
+//	connect(reportTree->model(), &QObject::destroyed, widget,
+//			[this, widget] { closeTab(tabWidget->indexOf(widget)); });
 }
 
 void MainWindow::activateFaultTreeDiagram(mef::FaultTree *faultTree)
@@ -2133,7 +2138,8 @@ void MainWindow::activateFaultTreeDiagram(mef::FaultTree *faultTree)
 		return;
 
     auto *topGate = faultTree->top_events().front();
-    auto *view = new DiagramView(this);
+	auto* dock = new KDDockWidgets::DockWidget(uniqueName());
+	auto *view = new DiagramView(dock);
     auto *scene = new diagram::DiagramScene(
         m_guiModel->gates().find(topGate)->get(), m_guiModel.get(), view);
     view->setScene(scene);
@@ -2145,11 +2151,11 @@ void MainWindow::activateFaultTreeDiagram(mef::FaultTree *faultTree)
     setupZoomableView(view);
     setupPrintableView(view);
     setupExportableView(view);
-	tabWidget->addTab(
-        view,
-        //: The tab for a fault tree diagram.
-		title);
-	tabWidget->setCurrentWidget(view);
+
+	//: The dock for a fault tree diagram.
+	dock->setTitle(title);
+	dock->setWidget(view);
+	addDockWidget(dock, KDDockWidgets::Location_OnRight);
 
     connect(scene, &diagram::DiagramScene::activated, this,
             [this](model::Element *element) {
@@ -2174,8 +2180,8 @@ void MainWindow::activateFaultTreeDiagram(mef::FaultTree *faultTree)
     connect(m_guiModel.get(),
             qOverload<mef::FaultTree *>(&model::Model::removed), view,
             [this, faultTree, view](mef::FaultTree *removedTree) {
-                if (removedTree == faultTree)
-					closeTab(tabWidget->indexOf(view));
+//                if (removedTree == faultTree)
+//					closeTab(tabWidget->indexOf(view));
             });
 }
 
