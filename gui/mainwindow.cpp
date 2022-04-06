@@ -1990,6 +1990,8 @@ void MainWindow::resetModelTree()
 //		tabWidget->removeTab(0);
 //        delete widget;
 //    }
+
+	closeDockWidgets(); // TODO: is alternative?
     m_guiModel = std::make_unique<model::Model>(m_model.get());
 	auto *oldModel = modelTree->model();
 	modelTree->setModel(new ModelTree(m_guiModel.get(), this));
