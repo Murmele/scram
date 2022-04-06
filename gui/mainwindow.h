@@ -125,8 +125,8 @@ private slots:
 private:
     static const int LAYOUT_VERSION = 0; ///< Layout compatibility version.
 
-	void setupUi();
-	void retranslateUi();
+	void setupUi(); // TODO: document
+	void retranslateUi(); // TODO: document
 
     void setupStatusBar();   ///< Sets up widgets in the status bar.
     void setupActions();     ///< Sets up all the actions with connections.
@@ -353,7 +353,6 @@ private:
 	QAction *actionRenameModel;
 	QAction *actionPreferences;
 	QAction *actionClearList;
-	QTabWidget *tabWidget;
 	QMenuBar *menuBar;
 	QMenu *menuHelp;
 	QMenu *menuFile;

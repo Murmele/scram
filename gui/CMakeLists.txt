@@ -12,6 +12,12 @@ message(STATUS "Found Qt5")
 message(STATUS "Qt5 Version: ${Qt5_VERSION}")
 ######################## End find Qt ###################### }}}
 
+######################## Begin KDABDockWidgets ########################
+set(KDDockWidgets_DIR "/usr/local/KDAB/KDDockWidgets-1.5.99/lib/cmake/KDDockWidgets")
+find_package(KDDockWidgets CONFIG REQUIRED)
+######################### End KDABDockWidgets #########################
+
+
 ##################### Begin cmake configuration ################### {{{
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 include_directories("${CMAKE_BINARY_DIR}")  # Access the generated core version header.
@@ -109,7 +115,8 @@ add_library(scram-gui STATIC ${SCRAM_GUI_SRC} ${SCRAM_GUI_UI})
 set(QT_MODULES Qt5::Core Qt5::Gui Qt5::Widgets Qt5::Svg Qt5::OpenGL Qt5::PrintSupport Qt5::Concurrent)
 target_link_libraries(scram-gui
   ${LIBS} scram
-  ${QT_MODULES})
+  ${QT_MODULES}
+  KDAB::kddockwidgets)
 target_compile_options(scram-gui PUBLIC $<$<CONFIG:DEBUG>:${SCRAM_CXX_FLAGS_DEBUG} -Wno-useless-cast>) # TODO: MOC failure.
 # Prevent implicit QString(const char*), string concat with "+", and other anti-patterns.
 target_compile_definitions(scram-gui PRIVATE
