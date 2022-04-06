@@ -497,7 +497,7 @@ void MainWindow::setupUi() {
 	reportTree->header()->setVisible(false);
 	reportTree->header()->setDefaultSectionSize(0);
 	reportDockWidget->setWidget(reportTree);
-	this->addDockWidget(reportDockWidget, KDDockWidgets::Location_OnLeft);
+	this->addDockWidget(reportDockWidget, KDDockWidgets::Location_OnBottom, modelDockWidget);
 
 	menuBar->addAction(menuFile->menuAction());
 	menuBar->addAction(menuEdit->menuAction());
