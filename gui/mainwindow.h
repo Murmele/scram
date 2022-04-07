@@ -128,6 +128,13 @@ private:
 	void setupUi(); // TODO: document
 	void retranslateUi(); // TODO: document
 
+	void newDockWidget(KDDockWidgets::DockWidgetBase *dockWidget,
+									   KDDockWidgets::Location location,
+									   KDDockWidgets::DockWidgetBase *relativeTo = nullptr,
+									   KDDockWidgets::InitialOption initialOption = {}, bool useLastDock=false);
+	void removeDockWidget(KDDockWidgets::DockWidgetBase *dockWidget);
+	void removeDockWidget(const QString& contains);
+
     void setupStatusBar();   ///< Sets up widgets in the status bar.
     void setupActions();     ///< Sets up all the actions with connections.
     void setupConnections(); ///< Sets up all the remaining connections.
@@ -316,6 +323,9 @@ private:
     std::unique_ptr<mef::Model> m_model;      ///< The analysis model.
     std::unique_ptr<model::Model> m_guiModel; ///< The GUI Model wrapper.
     std::unique_ptr<core::RiskAnalysis> m_analysis; ///< Report container.
+
+	QVector<KDDockWidgets::DockWidgetBase*> m_docks;
+	KDDockWidgets::DockWidgetBase* m_dockLastAdded{nullptr};
 
 	// Window related
 	QAction *actionAboutQt;

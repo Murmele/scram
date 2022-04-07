@@ -488,7 +488,7 @@ void MainWindow::setupUi() {
 	modelTree->setAnimated(true);
 	modelTree->header()->setVisible(false);
 	modelDockWidget->setWidget(modelTree);
-	this->addDockWidget(modelDockWidget, KDDockWidgets::Location_OnLeft);
+	this->newDockWidget(modelDockWidget, KDDockWidgets::Location_OnLeft);
 
 	auto* reportDockWidget = new KDDockWidgets::DockWidget(QStringLiteral("Reports"));
 	reportTree = new QTreeView(reportDockWidget);
@@ -497,7 +497,7 @@ void MainWindow::setupUi() {
 	reportTree->header()->setVisible(false);
 	reportTree->header()->setDefaultSectionSize(0);
 	reportDockWidget->setWidget(reportTree);
-	this->addDockWidget(reportDockWidget, KDDockWidgets::Location_OnBottom, modelDockWidget);
+	this->newDockWidget(reportDockWidget, KDDockWidgets::Location_OnBottom, modelDockWidget);
 
 	menuBar->addAction(menuFile->menuAction());
 	menuBar->addAction(menuEdit->menuAction());
@@ -1095,7 +1095,7 @@ void MainWindow::setupStartPage()
 	dock->setTitle(startPage->windowTitle());
 	dock->setIcon(startPage->windowIcon());
 	dock->setWidget(startPage);
-	addDockWidget(dock, KDDockWidgets::Location_OnRight);
+	newDockWidget(dock, KDDockWidgets::Location_OnRight);
 
     startPage->recentFilesBox->setVisible(
         m_recentFileActions.front()->isVisible());
@@ -1985,13 +1985,16 @@ QAbstractItemView *MainWindow::constructElementTable<model::GateContainerModel>(
 
 void MainWindow::resetModelTree()
 {
-//	while (tabWidget->count()) {
-//		auto *widget = tabWidget->widget(0);
-//		tabWidget->removeTab(0);
-//        delete widget;
-//    }
+	int index = 0;
+	const int count = m_docks.count();
+	while (m_docks.count() > 0 && index < count) {
+		const QString name = m_docks.at(index)->uniqueName();
+		if (name.contains(_("Gates")) || name.contains(_("Basic Events")) || name.contains(_("House Events")) || name.contains(_("Fault Tree:")))
+			removeDockWidget(m_docks.at(index));
+		else
+			index++;
+	}
 
-	closeDockWidgets(); // TODO: is alternative?
     m_guiModel = std::make_unique<model::Model>(m_model.get());
 	auto *oldModel = modelTree->model();
 	modelTree->setModel(new ModelTree(m_guiModel.get(), this));
@@ -2022,41 +2025,41 @@ void MainWindow::activateModelTree(const QModelIndex &index)
 			const auto title = _("Gates");
 			if (activateTab(title))
 				return;
-			auto* dock = new KDDockWidgets::DockWidget(uniqueName());
+			auto* dock = new KDDockWidgets::DockWidget(title);
             auto *table = constructElementTable<model::GateContainerModel>(
 				m_guiModel.get(), dock);
             //: The tab for the table of gates.
 			dock->setTitle(title);
 			dock->setWidget(table);
-			addDockWidget(dock, KDDockWidgets::Location_OnRight);
+			newDockWidget(dock, KDDockWidgets::Location_OnRight, nullptr, {}, true);
             return;
         }
         case ModelTree::Row::BasicEvents: {
 			const auto title = _("Basic Events");
 			if (activateTab(title))
 				return;
-			auto* dock = new KDDockWidgets::DockWidget(uniqueName());
+			auto* dock = new KDDockWidgets::DockWidget(title);
             auto *table =
                 constructElementTable<model::BasicEventContainerModel>(
 					m_guiModel.get(), dock);
             //: The tab for the table of basic events.	
 			dock->setTitle(title);
 			dock->setWidget(table);
-			addDockWidget(dock, KDDockWidgets::Location_OnRight);
+			newDockWidget(dock, KDDockWidgets::Location_OnRight, nullptr, {}, true);
             return;
         }
         case ModelTree::Row::HouseEvents: {
 			const auto title = _("House Events");
 			if (activateTab(title))
 				return;
-			auto* dock = new KDDockWidgets::DockWidget(uniqueName());
+			auto* dock = new KDDockWidgets::DockWidget(title);
             auto *table =
                 constructElementTable<model::HouseEventContainerModel>(
 					m_guiModel.get(), dock);
             //: The tab for the table of house events.
 			dock->setTitle(title);
 			dock->setWidget(table);
-			addDockWidget(dock, KDDockWidgets::Location_OnRight);
+			newDockWidget(dock, KDDockWidgets::Location_OnRight, nullptr, {}, true);
             return;
         }
         case ModelTree::Row::FaultTrees:
@@ -2093,12 +2096,12 @@ void MainWindow::activateReportTree(const QModelIndex &index)
 		if (activateTab(title))
 			return;
         bool withProbability = result.probability_analysis != nullptr;
-		auto* dock = new KDDockWidgets::DockWidget(uniqueName());
+		auto* dock = new KDDockWidgets::DockWidget(title);
 		auto* table = constructTableView<model::ProductTableModel>(
 			dock, result.fault_tree_analysis->products(), withProbability);
 		dock->setTitle(title);
 		dock->setWidget(table);
-		addDockWidget(dock, KDDockWidgets::Location_OnRight);
+		newDockWidget(dock, KDDockWidgets::Location_OnRight);
         table->sortByColumn(withProbability ? 2 : 1, withProbability
                                                          ? Qt::DescendingOrder
                                                          : Qt::AscendingOrder);
@@ -2112,12 +2115,12 @@ void MainWindow::activateReportTree(const QModelIndex &index)
 		const auto title = _("Importance: %1").arg(name);
 		if (activateTab(title))
 			return;
-		auto* dock = new KDDockWidgets::DockWidget(uniqueName());
+		auto* dock = new KDDockWidgets::DockWidget(title);
         widget = constructTableView<model::ImportanceTableModel>(
 			dock, &result.importance_analysis->importance());
 		dock->setTitle(title);
 		dock->setWidget(widget);
-		addDockWidget(dock, KDDockWidgets::Location_OnRight);
+		newDockWidget(dock, KDDockWidgets::Location_OnRight);
         break;
     }
     default:
@@ -2140,7 +2143,7 @@ void MainWindow::activateFaultTreeDiagram(mef::FaultTree *faultTree)
 		return;
 
     auto *topGate = faultTree->top_events().front();
-	auto* dock = new KDDockWidgets::DockWidget(uniqueName());
+	auto* dock = new KDDockWidgets::DockWidget(title);
 	auto *view = new DiagramView(dock);
     auto *scene = new diagram::DiagramScene(
         m_guiModel->gates().find(topGate)->get(), m_guiModel.get(), view);
@@ -2157,7 +2160,7 @@ void MainWindow::activateFaultTreeDiagram(mef::FaultTree *faultTree)
 	//: The dock for a fault tree diagram.
 	dock->setTitle(title);
 	dock->setWidget(view);
-	addDockWidget(dock, KDDockWidgets::Location_OnRight);
+	newDockWidget(dock, KDDockWidgets::Location_OnRight, nullptr, {}, true);
 
     connect(scene, &diagram::DiagramScene::activated, this,
             [this](model::Element *element) {
@@ -2196,6 +2199,40 @@ void MainWindow::resetReportTree(std::unique_ptr<core::RiskAnalysis> analysis)
         analysis ? new ReportTree(&analysis->results(), this) : nullptr);
     delete oldModel;
     m_analysis = std::move(analysis);
+}
+
+void MainWindow::newDockWidget(KDDockWidgets::DockWidgetBase *dockWidget,
+								   KDDockWidgets::Location location,
+								   KDDockWidgets::DockWidgetBase *relativeTo,
+				   KDDockWidgets::InitialOption initialOption, bool useLastDock)
+{
+	m_docks << dockWidget;
+	if (useLastDock)
+		relativeTo = m_dockLastAdded;
+	addDockWidget(dockWidget, location, relativeTo, initialOption);
+	m_dockLastAdded = dockWidget;
+}
+
+void MainWindow::removeDockWidget(const QString& contains) {
+	for (int i=0; i < m_docks.count(); i++) {
+		if (m_docks.at(i)->uniqueName().contains(contains)) {
+			if (m_dockLastAdded == m_docks.at(i))
+				m_dockLastAdded = nullptr;
+			m_docks.takeAt(i)->close();
+			break;
+		}
+	}
+}
+
+void MainWindow::removeDockWidget(KDDockWidgets::DockWidgetBase *dockWidget) {
+	if (m_dockLastAdded == dockWidget)
+		m_dockLastAdded = nullptr;
+	for (int i=0; i < m_docks.count(); i++) {
+		if (m_docks.at(i) == dockWidget) {
+			m_docks.takeAt(i)->close();
+			break;
+		}
+	}
 }
 
 } // namespace scram::gui
