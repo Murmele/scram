@@ -13,7 +13,6 @@ message(STATUS "Qt5 Version: ${Qt5_VERSION}")
 ######################## End find Qt ###################### }}}
 
 ######################## Begin KDABDockWidgets ########################
-set(KDDockWidgets_DIR "/usr/local/KDAB/KDDockWidgets-1.5.99/lib/cmake/KDDockWidgets")
 find_package(KDDockWidgets CONFIG REQUIRED)
 ######################### End KDABDockWidgets #########################
 
