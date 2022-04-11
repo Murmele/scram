@@ -163,7 +163,7 @@ jobs:
         run: |
           cd build
           ninja
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_GUI=ON -DWITH_TCMALLOC=OFF -DWITH_JEMALLOC=OFF -DWITH_COVERAGE=OFF -DWITH_PROFILE=OFF -DBUILD_TESTING=ON -D "BOOST_ROOT=${{ matrix.env.boost_install_path }}/boost" -D "BOOST_LIBRARYDIR=${{ matrix.env.boost_install_path }}/boost/stage/x64/Release/lib" ${{ env.CMAKE_FLAGS }} -DCMAKE_INSTALL_PREFIX=../install -DKDDockWidgets_DIR=${{github.workspace}}/lib/cmake/KDDockWidgets ..
+          cmake -G Ninja ..
 
       # used for testing
       - name: Install
