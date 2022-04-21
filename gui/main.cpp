@@ -191,7 +191,7 @@ int main(int argc, char *argv[])
     GuardedApplication app(argc, argv);
 
     QCoreApplication::setOrganizationName(QStringLiteral("scram"));
-    QCoreApplication::setOrganizationDomain(QStringLiteral("scram-pra.org"));
+    QCoreApplication::setOrganizationDomain(QStringLiteral("github.com/Murmele/scram"));
     QCoreApplication::setApplicationName(QStringLiteral("scram"));
     QCoreApplication::setApplicationVersion(QString::fromLatin1(SCRAM_VERSION));
 

@@ -358,9 +358,9 @@ void MainWindow::setupActions()
               "Technical Support: <a href=\"%3\">%3</a><br/>"
               "Bug Tracker: <a href=\"%4\">%4</a><br/><br/>%5")
                 .arg(QCoreApplication::applicationVersion(),
-                     QStringLiteral("https://scram-pra.org"),
+                     QStringLiteral("https://github.com/Murmele/scram"),
                      QStringLiteral("scram-users@googlegroups.com"),
-                     QStringLiteral("https://github.com/rakhimov/scram/issues"),
+                     QStringLiteral("https://github.com/Murmele/scram/issues"),
                      legal));
     });
 
