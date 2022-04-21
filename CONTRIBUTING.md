@@ -13,8 +13,8 @@ consider posting on [user mailing list].
 In bug reports, please supply as much information as feasible,
 such as the platform, version number, logs, and (sufficient) input.
 
-[Issue Tracker]: https://github.com/rakhimov/scram/issues?utf8=%E2%9C%93&q=
-[todo list]: https://scram-pra.org/doc/todo.html
+[Issue Tracker]: https://github.com/Murmele/scram/issues
+[todo list]: https://github.com/Murmele/scram/blob/main/doc/todo.rst
 [user mailing list]: https://groups.google.com/forum/#!forum/scram-users
 
 
@@ -42,7 +42,7 @@ and a git commit related to the GUI code can be "GUI: Fix the memory leak in Gat
 7. Submit your [pull request] from **your topic** branch to the **upstream develop** branch.
 8. Your pull request will be reviewed by another developer before merging.
 
-[Coding Style and Quality Assurance]: https://scram-pra.org/doc/coding_standards.html
+[Coding Style and Quality Assurance]: https://github.com/Murmele/scram/blob/main/doc/coding_standards.rst
 [developer mailing list]: https://groups.google.com/forum/#!forum/scram-dev
 [pull request]: https://help.github.com/articles/using-pull-requests/
 

@@ -14,4 +14,4 @@ This tool can handle non-coherent fault trees, containing NOT logic.
 in the Open-PSA Model Exchange Format.
 
 [SEE ALSO]
-https://scram-pra.org
+https://github.com/Murmele/scram

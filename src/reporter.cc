@@ -270,7 +270,7 @@ void Reporter::ReportSoftwareInformation(xml::StreamElement* information) {
       .SetAttribute("name", "SCRAM")
       .SetAttribute("version", *SCRAM_GIT_REVISION != '\0' ? SCRAM_GIT_REVISION
                                                            : SCRAM_VERSION)
-      .SetAttribute("contacts", "https://scram-pra.org");
+      .SetAttribute("contacts", "https://github.com/Murmele/scram");
 
   std::time_t current_time = std::time(nullptr);
   char iso_extended[20] = {};
