@@ -115,6 +115,16 @@ jobs:
           arch: ${{ matrix.env.qt_arch }}
           install-deps: true
 
+      - name: Install KDDockWidgets
+        run: |
+          git clone https://github.com/KDAB/KDDockWidgets.git
+          cd KDDockWidgets
+          git checkout 1.6
+          mkdir build
+          cd build
+          cmake -G Ninja -DCMAKE_INSTALL_PREFIX=${{github.workspace}} ..
+          ninja install
+
       # - name: Build Jemalloc
       #   if: matrix.env.ninja_platform == 'linux'
       #   run: |
@@ -137,7 +147,7 @@ jobs:
         run: |
           mkdir -p build
           cd build
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_GUI=ON -DWITH_TCMALLOC=OFF -DWITH_JEMALLOC=OFF -DWITH_COVERAGE=OFF -DWITH_PROFILE=OFF -D "BOOST_ROOT=${{ matrix.env.boost_install_path }}/boost" -D "BOOST_LIBRARYDIR=${{ matrix.env.boost_install_path }}/boost/stage/x64/Release/lib" ${{ env.CMAKE_FLAGS }} -DCMAKE_INSTALL_PREFIX=../install ..
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_GUI=ON -DWITH_TCMALLOC=OFF -DWITH_JEMALLOC=OFF -DWITH_COVERAGE=OFF -DWITH_PROFILE=OFF -D "BOOST_ROOT=${{ matrix.env.boost_install_path }}/boost" -D "BOOST_LIBRARYDIR=${{ matrix.env.boost_install_path }}/boost/stage/x64/Release/lib" ${{ env.CMAKE_FLAGS }} -DCMAKE_INSTALL_PREFIX=../install -DKDDockWidgets_DIR=${{github.workspace}}/lib/cmake/KDDockWidgets ..
           
       - name: Configure Release Windows
         if: matrix.env.ninja_platform == 'win'
@@ -147,13 +157,13 @@ jobs:
           $Env:PKG_CONFIG_PATH += ";D:/a/scram/libxml2/lib/pkgconfig"
           mkdir -p build
           cd build
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_GUI=ON -DWITH_TCMALLOC=OFF -DWITH_JEMALLOC=OFF -DWITH_COVERAGE=OFF -DWITH_PROFILE=OFF -DBUILD_TESTING=ON -D "BOOST_ROOT=${{ matrix.env.boost_install_path }}/boost" -D "BOOST_LIBRARYDIR=${{ matrix.env.boost_install_path }}/boost/stage/x64/Release/lib" ${{ env.CMAKE_FLAGS }} -DCMAKE_INSTALL_PREFIX=../install ..
+          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_GUI=ON -DWITH_TCMALLOC=OFF -DWITH_JEMALLOC=OFF -DWITH_COVERAGE=OFF -DWITH_PROFILE=OFF -DBUILD_TESTING=ON -D "BOOST_ROOT=${{ matrix.env.boost_install_path }}/boost" -D "BOOST_LIBRARYDIR=${{ matrix.env.boost_install_path }}/boost/stage/x64/Release/lib" ${{ env.CMAKE_FLAGS }} -DCMAKE_INSTALL_PREFIX=../install -DKDDockWidgets_DIR=${{github.workspace}}/lib/cmake/KDDockWidgets ..
 
       - name: Build
         run: |
           cd build
           ninja
-          cmake -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_GUI=ON -DWITH_TCMALLOC=OFF -DWITH_JEMALLOC=OFF -DWITH_COVERAGE=OFF -DWITH_PROFILE=OFF -DBUILD_TESTING=ON -D "BOOST_ROOT=${{ matrix.env.boost_install_path }}/boost" -D "BOOST_LIBRARYDIR=${{ matrix.env.boost_install_path }}/boost/stage/x64/Release/lib" ${{ env.CMAKE_FLAGS }} -DCMAKE_INSTALL_PREFIX=../install ..
+          cmake -G Ninja ..
 
       # used for testing
       - name: Install

@@ -31,11 +31,16 @@
 #include <QComboBox>
 #include <QDir>
 #include <QLineEdit>
-#include <QMainWindow>
 #include <QSettings>
 #include <QTableView>
+#include <QTreeView>
+#include <QGridLayout>
+#include <QHBoxLayout>
+#include <QVBoxLayout>
 #include <QTimer>
 #include <QUndoStack>
+
+#include <kddockwidgets/MainWindow.h>
 
 #include "src/model.h"
 #include "src/risk_analysis.h"
@@ -44,15 +49,11 @@
 #include "model.h"
 #include "zoomableview.h"
 
-namespace Ui {
-class MainWindow;
-}
-
 namespace scram::gui {
 
 class EventDialog; ///< @todo Static build issues if the header is included.
 
-class MainWindow : public QMainWindow
+class MainWindow : public KDDockWidgets::MainWindow
 {
     Q_OBJECT
 
@@ -123,6 +124,16 @@ private slots:
 
 private:
     static const int LAYOUT_VERSION = 0; ///< Layout compatibility version.
+
+	void setupUi(); // TODO: document
+	void retranslateUi(); // TODO: document
+
+	void newDockWidget(KDDockWidgets::DockWidgetBase *dockWidget,
+									   KDDockWidgets::Location location,
+									   KDDockWidgets::DockWidgetBase *relativeTo = nullptr,
+									   KDDockWidgets::InitialOption initialOption = {}, bool useLastDock=false);
+	void removeDockWidget(KDDockWidgets::DockWidgetBase *dockWidget);
+	void removeDockWidget(const QString& contains);
 
     void setupStatusBar();   ///< Sets up widgets in the status bar.
     void setupActions();     ///< Sets up all the actions with connections.
@@ -298,7 +309,6 @@ private:
     /// Runs the analysis with the current model.
     void runAnalysis();
 
-    std::unique_ptr<Ui::MainWindow> ui; ///< The main UI of the application.
     QAction *m_undoAction;   ///< The undo action from the undo stack.
     QAction *m_redoAction;   ///< The redo action from the undo stack.
     QUndoStack *m_undoStack; ///< The application undo stack.
@@ -313,6 +323,62 @@ private:
     std::unique_ptr<mef::Model> m_model;      ///< The analysis model.
     std::unique_ptr<model::Model> m_guiModel; ///< The GUI Model wrapper.
     std::unique_ptr<core::RiskAnalysis> m_analysis; ///< Report container.
+
+	QVector<KDDockWidgets::DockWidgetBase*> m_docks;
+	KDDockWidgets::DockWidgetBase* m_dockLastAdded{nullptr};
+
+	// Window related
+	QAction *actionAboutQt;
+	QAction *actionAboutScram;
+	QAction *actionExit;
+	QAction *actionNewModel;
+	QAction *actionOpenFiles;
+	QAction *actionSave;
+	QAction *actionSaveAs;
+	QAction *actionPrint;
+	QAction *actionExportAs;
+	QAction *actionZoomIn;
+	QAction *actionZoomOut;
+	QAction *action400;
+	QAction *action200;
+	QAction *action150;
+	QAction *action125;
+	QAction *action100;
+	QAction *action85;
+	QAction *action50;
+	QAction *action70;
+	QAction *actionBestFit;
+	QAction *actionRun;
+	QAction *actionSettings;
+	QAction *actionModelToolBar;
+	QAction *actionZoomToolBar;
+	QAction *actionAnalysisToolBar;
+	QAction *actionData;
+	QAction *actionReports;
+	QAction *actionPrintPreview;
+	QAction *actionAddElement;
+	QAction *actionRemoveElement;
+	QAction *actionEditToolBar;
+	QAction *actionExportReportAs;
+	QAction *actionRenameModel;
+	QAction *actionPreferences;
+	QAction *actionClearList;
+	QMenuBar *menuBar;
+	QMenu *menuHelp;
+	QMenu *menuFile;
+	QMenu *menuRecentFiles;
+	QMenu *menuView;
+	QMenu *menuZoom;
+	QMenu *menuToolbars;
+	QMenu *menuAnalysis;
+	QMenu *menuEdit;
+	QStatusBar *statusBar;
+	QToolBar *modelToolBar;
+	QToolBar *editToolBar;
+	QToolBar *zoomToolBar;
+	QToolBar *analysisToolBar;
+	QTreeView *modelTree;
+	QTreeView *reportTree;
 };
 
 } // namespace scram::gui

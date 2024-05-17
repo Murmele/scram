@@ -18,9 +18,9 @@
 /// @file
 
 #include "mainwindow.h"
-#include "ui_mainwindow.h"
 #include "ui_namedialog.h"
 #include "ui_startpage.h"
+//#include "ui_mainwindow.h"
 
 #include <algorithm>
 #include <sstream>
@@ -34,6 +34,8 @@
 #include <QProgressDialog>
 #include <QtConcurrent>
 #include <QtOpenGL>
+
+#include <kddockwidgets/DockWidget>
 
 #include <boost/exception/get_error_info.hpp>
 #include <boost/filesystem.hpp>
@@ -116,24 +118,23 @@ private:
 };
 
 MainWindow::MainWindow(QWidget *parent)
-    : QMainWindow(parent), ui(new Ui::MainWindow),
+	: KDDockWidgets::MainWindow(tr("Main Window"), KDDockWidgets::MainWindowOption_None, parent),
       m_undoStack(new QUndoStack(this)),
       m_zoomBox(new QComboBox), // Will be owned by the tool bar later.
       m_autoSaveTimer(new QTimer(this))
 {
-    ui->setupUi(this);
-
+	setupUi();
     m_zoomBox->setEditable(true);
     m_zoomBox->setEnabled(false);
     m_zoomBox->setInsertPolicy(QComboBox::NoInsert);
     m_zoomBox->setValidator(Validator::percent());
-    for (QAction *action : ui->menuZoom->actions()) {
+	for (QAction *action : menuZoom->actions()) {
         m_zoomBox->addItem(action->text());
         connect(action, &QAction::triggered, m_zoomBox,
                 [action, this] { m_zoomBox->setCurrentText(action->text()); });
     }
     m_zoomBox->setCurrentText(QStringLiteral("100%"));
-    ui->zoomToolBar->addWidget(m_zoomBox); // Transfer the ownership.
+	zoomToolBar->addWidget(m_zoomBox); // Transfer the ownership.
 
     setupStatusBar();
     setupActions();
@@ -143,6 +144,514 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 MainWindow::~MainWindow() = default;
+
+void MainWindow::setupUi() {
+	QSizePolicy sizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+	sizePolicy.setHorizontalStretch(0);
+	sizePolicy.setVerticalStretch(0);
+	sizePolicy.setHeightForWidth(this->sizePolicy().hasHeightForWidth());
+	this->setSizePolicy(sizePolicy);
+	this->setWindowTitle(QString::fromUtf8("SCRAM"));
+	QIcon icon;
+	icon.addFile(QString::fromUtf8(":/images/scram128x128.png"), QSize(), QIcon::Normal, QIcon::Off);
+	this->setWindowIcon(icon);
+	this->setAutoFillBackground(false);
+	actionAboutQt = new QAction(this);
+	actionAboutQt->setObjectName(QString::fromUtf8("actionAboutQt"));
+	QIcon icon1;
+	QString iconThemeName = QString::fromUtf8("help-about");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon1 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon1.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionAboutQt->setIcon(icon1);
+	actionAboutScram = new QAction(this);
+	actionAboutScram->setObjectName(QString::fromUtf8("actionAboutScram"));
+	actionAboutScram->setIcon(icon1);
+	actionExit = new QAction(this);
+	actionExit->setObjectName(QString::fromUtf8("actionExit"));
+	QIcon icon2;
+	iconThemeName = QString::fromUtf8("application-exit");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon2 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon2.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionExit->setIcon(icon2);
+	actionNewModel = new QAction(this);
+	actionNewModel->setObjectName(QString::fromUtf8("actionNewModel"));
+	QIcon icon3;
+	iconThemeName = QString::fromUtf8("document-new");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon3 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon3.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionNewModel->setIcon(icon3);
+	actionOpenFiles = new QAction(this);
+	actionOpenFiles->setObjectName(QString::fromUtf8("actionOpenFiles"));
+	QIcon icon4;
+	iconThemeName = QString::fromUtf8("document-open");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon4 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon4.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionOpenFiles->setIcon(icon4);
+	actionSave = new QAction(this);
+	actionSave->setObjectName(QString::fromUtf8("actionSave"));
+	actionSave->setEnabled(false);
+	QIcon icon5;
+	iconThemeName = QString::fromUtf8("document-save");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon5 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon5.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionSave->setIcon(icon5);
+	actionSaveAs = new QAction(this);
+	actionSaveAs->setObjectName(QString::fromUtf8("actionSaveAs"));
+	actionSaveAs->setEnabled(false);
+	QIcon icon6;
+	iconThemeName = QString::fromUtf8("document-save-as");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon6 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon6.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionSaveAs->setIcon(icon6);
+	actionPrint = new QAction(this);
+	actionPrint->setObjectName(QString::fromUtf8("actionPrint"));
+	actionPrint->setEnabled(false);
+	QIcon icon7;
+	iconThemeName = QString::fromUtf8("document-print");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon7 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon7.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionPrint->setIcon(icon7);
+	actionExportAs = new QAction(this);
+	actionExportAs->setObjectName(QString::fromUtf8("actionExportAs"));
+	actionExportAs->setEnabled(false);
+	QIcon icon8;
+	iconThemeName = QString::fromUtf8("document-export");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon8 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon8.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionExportAs->setIcon(icon8);
+	actionZoomIn = new QAction(this);
+	actionZoomIn->setObjectName(QString::fromUtf8("actionZoomIn"));
+	actionZoomIn->setEnabled(false);
+	QIcon icon9;
+	iconThemeName = QString::fromUtf8("zoom-in");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon9 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon9.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionZoomIn->setIcon(icon9);
+	actionZoomOut = new QAction(this);
+	actionZoomOut->setObjectName(QString::fromUtf8("actionZoomOut"));
+	actionZoomOut->setEnabled(false);
+	QIcon icon10;
+	iconThemeName = QString::fromUtf8("zoom-out");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon10 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon10.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionZoomOut->setIcon(icon10);
+	action400 = new QAction(this);
+	action400->setObjectName(QString::fromUtf8("action400"));
+	action400->setText(QString::fromUtf8("400%"));
+	action400->setIconText(QString::fromUtf8("400%"));
+#if QT_CONFIG(tooltip)
+	action400->setToolTip(QString::fromUtf8("400%"));
+#endif // QT_CONFIG(tooltip)
+	action200 = new QAction(this);
+	action200->setObjectName(QString::fromUtf8("action200"));
+	action200->setText(QString::fromUtf8("200%"));
+	action200->setIconText(QString::fromUtf8("200%"));
+#if QT_CONFIG(tooltip)
+	action200->setToolTip(QString::fromUtf8("200%"));
+#endif // QT_CONFIG(tooltip)
+	action150 = new QAction(this);
+	action150->setObjectName(QString::fromUtf8("action150"));
+	action150->setText(QString::fromUtf8("150%"));
+	action150->setIconText(QString::fromUtf8("150%"));
+#if QT_CONFIG(tooltip)
+	action150->setToolTip(QString::fromUtf8("150%"));
+#endif // QT_CONFIG(tooltip)
+	action125 = new QAction(this);
+	action125->setObjectName(QString::fromUtf8("action125"));
+	action125->setText(QString::fromUtf8("125%"));
+	action125->setIconText(QString::fromUtf8("125%"));
+#if QT_CONFIG(tooltip)
+	action125->setToolTip(QString::fromUtf8("125%"));
+#endif // QT_CONFIG(tooltip)
+	action100 = new QAction(this);
+	action100->setObjectName(QString::fromUtf8("action100"));
+	action100->setText(QString::fromUtf8("100%"));
+	action100->setIconText(QString::fromUtf8("100%"));
+#if QT_CONFIG(tooltip)
+	action100->setToolTip(QString::fromUtf8("100%"));
+#endif // QT_CONFIG(tooltip)
+	action85 = new QAction(this);
+	action85->setObjectName(QString::fromUtf8("action85"));
+	action85->setText(QString::fromUtf8("85%"));
+	action85->setIconText(QString::fromUtf8("85%"));
+#if QT_CONFIG(tooltip)
+	action85->setToolTip(QString::fromUtf8("85%"));
+#endif // QT_CONFIG(tooltip)
+	action50 = new QAction(this);
+	action50->setObjectName(QString::fromUtf8("action50"));
+	action50->setText(QString::fromUtf8("50%"));
+	action50->setIconText(QString::fromUtf8("50%"));
+#if QT_CONFIG(tooltip)
+	action50->setToolTip(QString::fromUtf8("50%"));
+#endif // QT_CONFIG(tooltip)
+	action70 = new QAction(this);
+	action70->setObjectName(QString::fromUtf8("action70"));
+	action70->setText(QString::fromUtf8("70%"));
+	action70->setIconText(QString::fromUtf8("70%"));
+#if QT_CONFIG(tooltip)
+	action70->setToolTip(QString::fromUtf8("70%"));
+#endif // QT_CONFIG(tooltip)
+	actionBestFit = new QAction(this);
+	actionBestFit->setObjectName(QString::fromUtf8("actionBestFit"));
+	actionBestFit->setEnabled(false);
+	QIcon icon11;
+	iconThemeName = QString::fromUtf8("zoom-fit-best");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon11 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon11.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionBestFit->setIcon(icon11);
+	actionRun = new QAction(this);
+	actionRun->setObjectName(QString::fromUtf8("actionRun"));
+	actionRun->setEnabled(false);
+	QIcon icon12;
+	iconThemeName = QString::fromUtf8("utilities-terminal");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon12 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon12.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionRun->setIcon(icon12);
+#if QT_CONFIG(shortcut)
+	actionRun->setShortcut(QString::fromUtf8("Alt+R"));
+#endif // QT_CONFIG(shortcut)
+	actionSettings = new QAction(this);
+	actionSettings->setObjectName(QString::fromUtf8("actionSettings"));
+	QIcon icon13;
+	iconThemeName = QString::fromUtf8("applications-system");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon13 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon13.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionSettings->setIcon(icon13);
+#if QT_CONFIG(shortcut)
+	actionSettings->setShortcut(QString::fromUtf8("Alt+S"));
+#endif // QT_CONFIG(shortcut)
+	actionModelToolBar = new QAction(this);
+	actionModelToolBar->setObjectName(QString::fromUtf8("actionModelToolBar"));
+	actionModelToolBar->setCheckable(true);
+	actionZoomToolBar = new QAction(this);
+	actionZoomToolBar->setObjectName(QString::fromUtf8("actionZoomToolBar"));
+	actionZoomToolBar->setCheckable(true);
+	actionAnalysisToolBar = new QAction(this);
+	actionAnalysisToolBar->setObjectName(QString::fromUtf8("actionAnalysisToolBar"));
+	actionAnalysisToolBar->setCheckable(true);
+	actionData = new QAction(this);
+	actionData->setObjectName(QString::fromUtf8("actionData"));
+	actionData->setCheckable(true);
+	actionReports = new QAction(this);
+	actionReports->setObjectName(QString::fromUtf8("actionReports"));
+	actionReports->setCheckable(true);
+	actionPrintPreview = new QAction(this);
+	actionPrintPreview->setObjectName(QString::fromUtf8("actionPrintPreview"));
+	actionPrintPreview->setEnabled(false);
+	QIcon icon14;
+	iconThemeName = QString::fromUtf8("document-print-preview");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon14 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon14.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionPrintPreview->setIcon(icon14);
+	actionAddElement = new QAction(this);
+	actionAddElement->setObjectName(QString::fromUtf8("actionAddElement"));
+	actionAddElement->setEnabled(false);
+	QIcon icon15;
+	iconThemeName = QString::fromUtf8("list-add");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon15 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon15.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionAddElement->setIcon(icon15);
+	actionRemoveElement = new QAction(this);
+	actionRemoveElement->setObjectName(QString::fromUtf8("actionRemoveElement"));
+	actionRemoveElement->setEnabled(false);
+	QIcon icon16;
+	iconThemeName = QString::fromUtf8("list-remove");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon16 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon16.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionRemoveElement->setIcon(icon16);
+	actionEditToolBar = new QAction(this);
+	actionEditToolBar->setObjectName(QString::fromUtf8("actionEditToolBar"));
+	actionEditToolBar->setCheckable(true);
+	actionExportReportAs = new QAction(this);
+	actionExportReportAs->setObjectName(QString::fromUtf8("actionExportReportAs"));
+	actionExportReportAs->setEnabled(false);
+	actionExportReportAs->setIcon(icon8);
+	actionRenameModel = new QAction(this);
+	actionRenameModel->setObjectName(QString::fromUtf8("actionRenameModel"));
+	actionRenameModel->setEnabled(false);
+	actionPreferences = new QAction(this);
+	actionPreferences->setObjectName(QString::fromUtf8("actionPreferences"));
+	QIcon icon17;
+	iconThemeName = QString::fromUtf8("preferences-system");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon17 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon17.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	actionPreferences->setIcon(icon17);
+	actionClearList = new QAction(this);
+	actionClearList->setObjectName(QString::fromUtf8("actionClearList"));
+
+	menuBar = new QMenuBar(this);
+	menuBar->setObjectName(QString::fromUtf8("menuBar"));
+	menuBar->setGeometry(QRect(0, 0, 640, 25));
+	menuHelp = new QMenu(menuBar);
+	menuHelp->setObjectName(QString::fromUtf8("menuHelp"));
+	menuFile = new QMenu(menuBar);
+	menuFile->setObjectName(QString::fromUtf8("menuFile"));
+	menuRecentFiles = new QMenu(menuFile);
+	menuRecentFiles->setObjectName(QString::fromUtf8("menuRecentFiles"));
+	menuRecentFiles->setEnabled(false);
+	QIcon icon18;
+	iconThemeName = QString::fromUtf8("document-open-recent");
+	if (QIcon::hasThemeIcon(iconThemeName)) {
+		icon18 = QIcon::fromTheme(iconThemeName);
+	} else {
+		icon18.addFile(QString::fromUtf8("."), QSize(), QIcon::Normal, QIcon::Off);
+	}
+	menuRecentFiles->setIcon(icon18);
+	menuView = new QMenu(menuBar);
+	menuView->setObjectName(QString::fromUtf8("menuView"));
+	menuZoom = new QMenu(menuView);
+	menuZoom->setObjectName(QString::fromUtf8("menuZoom"));
+	menuZoom->setEnabled(false);
+	menuToolbars = new QMenu(menuView);
+	menuToolbars->setObjectName(QString::fromUtf8("menuToolbars"));
+	menuAnalysis = new QMenu(menuBar);
+	menuAnalysis->setObjectName(QString::fromUtf8("menuAnalysis"));
+	menuEdit = new QMenu(menuBar);
+	menuEdit->setObjectName(QString::fromUtf8("menuEdit"));
+	this->setMenuBar(menuBar);
+	statusBar = new QStatusBar(this);
+	statusBar->setObjectName(QString::fromUtf8("statusBar"));
+	this->setStatusBar(statusBar);
+	modelToolBar = new QToolBar(this);
+	modelToolBar->setObjectName(QString::fromUtf8("modelToolBar"));
+	this->addToolBar(Qt::TopToolBarArea, modelToolBar);
+	editToolBar = new QToolBar(this);
+	editToolBar->setObjectName(QString::fromUtf8("editToolBar"));
+	this->addToolBar(Qt::TopToolBarArea, editToolBar);
+	zoomToolBar = new QToolBar(this);
+	zoomToolBar->setObjectName(QString::fromUtf8("zoomToolBar"));
+	zoomToolBar->setMovable(true);
+	this->addToolBar(Qt::TopToolBarArea, zoomToolBar);
+	analysisToolBar = new QToolBar(this);
+	analysisToolBar->setObjectName(QString::fromUtf8("analysisToolBar"));
+	this->addToolBar(Qt::TopToolBarArea, analysisToolBar);
+
+	auto* modelDockWidget = new KDDockWidgets::DockWidget(QStringLiteral("Data"));
+	modelTree = new QTreeView(modelDockWidget);
+	modelTree->setObjectName(QString::fromUtf8("modelTree"));
+	QSizePolicy sizePolicy1(QSizePolicy::Preferred, QSizePolicy::Expanding);
+	sizePolicy1.setHorizontalStretch(0);
+	sizePolicy1.setVerticalStretch(0);
+	sizePolicy1.setHeightForWidth(modelTree->sizePolicy().hasHeightForWidth());
+	modelTree->setSizePolicy(sizePolicy1);
+	modelTree->setAnimated(true);
+	modelTree->header()->setVisible(false);
+	modelDockWidget->setWidget(modelTree);
+	this->newDockWidget(modelDockWidget, KDDockWidgets::Location_OnLeft);
+
+	auto* reportDockWidget = new KDDockWidgets::DockWidget(QStringLiteral("Reports"));
+	reportTree = new QTreeView(reportDockWidget);
+	reportTree->setObjectName(QString::fromUtf8("reportTree"));
+	reportTree->setAnimated(true);
+	reportTree->header()->setVisible(false);
+	reportTree->header()->setDefaultSectionSize(0);
+	reportDockWidget->setWidget(reportTree);
+	this->newDockWidget(reportDockWidget, KDDockWidgets::Location_OnBottom, modelDockWidget);
+
+	menuBar->addAction(menuFile->menuAction());
+	menuBar->addAction(menuEdit->menuAction());
+	menuBar->addAction(menuView->menuAction());
+	menuBar->addAction(menuAnalysis->menuAction());
+	menuBar->addAction(menuHelp->menuAction());
+	menuHelp->addAction(actionAboutScram);
+	menuHelp->addAction(actionAboutQt);
+	menuFile->addAction(actionNewModel);
+	menuFile->addAction(actionOpenFiles);
+	menuFile->addAction(menuRecentFiles->menuAction());
+	menuFile->addSeparator();
+	menuFile->addAction(actionSave);
+	menuFile->addAction(actionSaveAs);
+	menuFile->addSeparator();
+	menuFile->addAction(actionExportAs);
+	menuFile->addAction(actionExportReportAs);
+	menuFile->addSeparator();
+	menuFile->addAction(actionPrintPreview);
+	menuFile->addAction(actionPrint);
+	menuFile->addSeparator();
+	menuFile->addAction(actionExit);
+	menuRecentFiles->addSeparator();
+	menuRecentFiles->addAction(actionClearList);
+	menuView->addAction(actionZoomIn);
+	menuView->addAction(actionZoomOut);
+	menuView->addAction(menuZoom->menuAction());
+	menuView->addAction(actionBestFit);
+	menuView->addSeparator();
+	menuView->addAction(menuToolbars->menuAction());
+	menuView->addSeparator();
+	menuView->addAction(actionData);
+	menuView->addAction(actionReports);
+	menuZoom->addAction(action400);
+	menuZoom->addAction(action200);
+	menuZoom->addAction(action150);
+	menuZoom->addAction(action125);
+	menuZoom->addAction(action100);
+	menuZoom->addAction(action85);
+	menuZoom->addAction(action70);
+	menuZoom->addAction(action50);
+	menuToolbars->addAction(actionModelToolBar);
+	menuToolbars->addAction(actionEditToolBar);
+	menuToolbars->addAction(actionZoomToolBar);
+	menuToolbars->addAction(actionAnalysisToolBar);
+	menuAnalysis->addAction(actionSettings);
+	menuAnalysis->addSeparator();
+	menuAnalysis->addAction(actionRun);
+	menuEdit->addSeparator();
+	menuEdit->addAction(actionAddElement);
+	menuEdit->addAction(actionRemoveElement);
+	menuEdit->addSeparator();
+	menuEdit->addAction(actionRenameModel);
+	menuEdit->addSeparator();
+	menuEdit->addAction(actionPreferences);
+	modelToolBar->addAction(actionNewModel);
+	modelToolBar->addAction(actionOpenFiles);
+	modelToolBar->addAction(actionSave);
+	modelToolBar->addAction(actionSaveAs);
+	editToolBar->addSeparator();
+	editToolBar->addAction(actionAddElement);
+	editToolBar->addAction(actionRemoveElement);
+	zoomToolBar->addAction(actionZoomIn);
+	zoomToolBar->addAction(actionBestFit);
+	zoomToolBar->addAction(actionZoomOut);
+	analysisToolBar->addAction(actionSettings);
+	analysisToolBar->addAction(actionRun);
+
+	retranslateUi();
+	QObject::connect(actionModelToolBar, SIGNAL(toggled(bool)), modelToolBar, SLOT(setVisible(bool)));
+	QObject::connect(modelToolBar, SIGNAL(visibilityChanged(bool)), actionModelToolBar, SLOT(setChecked(bool)));
+	QObject::connect(actionExit, SIGNAL(triggered()), this, SLOT(close()));
+	QObject::connect(zoomToolBar, SIGNAL(visibilityChanged(bool)), actionZoomToolBar, SLOT(setChecked(bool)));
+	QObject::connect(actionZoomToolBar, SIGNAL(toggled(bool)), zoomToolBar, SLOT(setVisible(bool)));
+	QObject::connect(analysisToolBar, SIGNAL(visibilityChanged(bool)), actionAnalysisToolBar, SLOT(setChecked(bool)));
+	QObject::connect(actionAnalysisToolBar, SIGNAL(toggled(bool)), analysisToolBar, SLOT(setVisible(bool)));
+	QObject::connect(actionData, SIGNAL(toggled(bool)), modelDockWidget, SLOT(setVisible(bool)));
+	QObject::connect(modelDockWidget, SIGNAL(visibilityChanged(bool)), actionData, SLOT(setChecked(bool)));
+	QObject::connect(actionReports, SIGNAL(toggled(bool)), reportDockWidget, SLOT(setVisible(bool)));
+	QObject::connect(reportDockWidget, SIGNAL(visibilityChanged(bool)), actionReports, SLOT(setChecked(bool)));
+	QObject::connect(actionEditToolBar, SIGNAL(toggled(bool)), editToolBar, SLOT(setVisible(bool)));
+	QObject::connect(editToolBar, SIGNAL(visibilityChanged(bool)), actionEditToolBar, SLOT(setChecked(bool)));
+
+	QMetaObject::connectSlotsByName(this);
+} // setupUi
+
+void MainWindow::retranslateUi()
+{
+	actionAboutQt->setText(QCoreApplication::translate("MainWindow", "About &Qt", nullptr));
+#if QT_CONFIG(statustip)
+	actionAboutQt->setStatusTip(QCoreApplication::translate("MainWindow", "About the Qt toolkit", nullptr));
+#endif // QT_CONFIG(statustip)
+	actionAboutScram->setText(QCoreApplication::translate("MainWindow", "About &SCRAM", nullptr));
+	actionExit->setText(QCoreApplication::translate("MainWindow", "E&xit", nullptr));
+#if QT_CONFIG(tooltip)
+	actionExit->setToolTip(QCoreApplication::translate("MainWindow", "Exit the Application", nullptr));
+#endif // QT_CONFIG(tooltip)
+	actionNewModel->setText(QCoreApplication::translate("MainWindow", "&New Model", nullptr));
+#if QT_CONFIG(tooltip)
+	actionNewModel->setToolTip(QCoreApplication::translate("MainWindow", "Create a New Model", nullptr));
+#endif // QT_CONFIG(tooltip)
+	actionOpenFiles->setText(QCoreApplication::translate("MainWindow", "&Open Model Files...", nullptr));
+#if QT_CONFIG(tooltip)
+	actionOpenFiles->setToolTip(QCoreApplication::translate("MainWindow", "Open Model Files", nullptr));
+#endif // QT_CONFIG(tooltip)
+	actionSave->setText(QCoreApplication::translate("MainWindow", "&Save Model", nullptr));
+	actionSaveAs->setText(QCoreApplication::translate("MainWindow", "Save Model &As...", nullptr));
+	actionPrint->setText(QCoreApplication::translate("MainWindow", "&Print...", nullptr));
+#if QT_CONFIG(tooltip)
+	actionPrint->setToolTip(QCoreApplication::translate("MainWindow", "Print", nullptr));
+#endif // QT_CONFIG(tooltip)
+	actionExportAs->setText(QCoreApplication::translate("MainWindow", "&Export As...", nullptr));
+	actionZoomIn->setText(QCoreApplication::translate("MainWindow", "Zoom &In", nullptr));
+	actionZoomOut->setText(QCoreApplication::translate("MainWindow", "Zoom &Out", nullptr));
+	actionBestFit->setText(QCoreApplication::translate("MainWindow", "Best &Fit", nullptr));
+	actionRun->setText(QCoreApplication::translate("MainWindow", "&Run", "execute analysis"));
+	actionRun->setIconText(QCoreApplication::translate("MainWindow", "Run Analysis", nullptr));
+#if QT_CONFIG(tooltip)
+	actionRun->setToolTip(QCoreApplication::translate("MainWindow", "Run Analysis", nullptr));
+#endif // QT_CONFIG(tooltip)
+	actionSettings->setText(QCoreApplication::translate("MainWindow", "&Settings...", "analysis configuration"));
+	actionSettings->setIconText(QCoreApplication::translate("MainWindow", "Analysis Settings", nullptr));
+#if QT_CONFIG(tooltip)
+	actionSettings->setToolTip(QCoreApplication::translate("MainWindow", "Analysis Settings", nullptr));
+#endif // QT_CONFIG(tooltip)
+	actionModelToolBar->setText(QCoreApplication::translate("MainWindow", "&Model", nullptr));
+	actionZoomToolBar->setText(QCoreApplication::translate("MainWindow", "&Zoom", nullptr));
+	actionAnalysisToolBar->setText(QCoreApplication::translate("MainWindow", "&Analysis", nullptr));
+	actionData->setText(QCoreApplication::translate("MainWindow", "&Data", nullptr));
+	actionReports->setText(QCoreApplication::translate("MainWindow", "&Reports", nullptr));
+	actionPrintPreview->setText(QCoreApplication::translate("MainWindow", "Print Previe&w...", nullptr));
+	actionAddElement->setText(QCoreApplication::translate("MainWindow", "&Add Element", nullptr));
+	actionRemoveElement->setText(QCoreApplication::translate("MainWindow", "Re&move Element", nullptr));
+	actionEditToolBar->setText(QCoreApplication::translate("MainWindow", "&Edit", nullptr));
+	actionExportReportAs->setText(QCoreApplication::translate("MainWindow", "Export &Report As...", nullptr));
+	actionRenameModel->setText(QCoreApplication::translate("MainWindow", "Re&name Model", nullptr));
+	actionPreferences->setText(QCoreApplication::translate("MainWindow", "&Preferences...", nullptr));
+	actionClearList->setText(QCoreApplication::translate("MainWindow", "&Clear List", nullptr));
+	menuHelp->setTitle(QCoreApplication::translate("MainWindow", "&Help", nullptr));
+	menuFile->setTitle(QCoreApplication::translate("MainWindow", "&File", nullptr));
+	menuRecentFiles->setTitle(QCoreApplication::translate("MainWindow", "Recent &Files", nullptr));
+	menuView->setTitle(QCoreApplication::translate("MainWindow", "&View", nullptr));
+	menuZoom->setTitle(QCoreApplication::translate("MainWindow", "&Zoom", nullptr));
+	menuToolbars->setTitle(QCoreApplication::translate("MainWindow", "&Toolbars", nullptr));
+	menuAnalysis->setTitle(QCoreApplication::translate("MainWindow", "&Analysis", nullptr));
+	menuEdit->setTitle(QCoreApplication::translate("MainWindow", "&Edit", nullptr));
+	modelToolBar->setWindowTitle(QCoreApplication::translate("MainWindow", "Model Tool Bar", nullptr));
+	editToolBar->setWindowTitle(QCoreApplication::translate("MainWindow", "Edit Tool Bar", nullptr));
+	zoomToolBar->setWindowTitle(QCoreApplication::translate("MainWindow", "Zoom Tool Bar", nullptr));
+	analysisToolBar->setWindowTitle(QCoreApplication::translate("MainWindow", "Analysis Tool Bar", nullptr));
+//	modelDockWidget->setWindowTitle(QCoreApplication::translate("MainWindow", "Data", nullptr));
+//	reportDockWidget->setWindowTitle(QCoreApplication::translate("MainWindow", "Reports", nullptr));
+//	(void)MainWindow;
+} // retranslateUi
 
 namespace { // Error message dialog for SCRAM exceptions.
 
@@ -335,14 +844,14 @@ void MainWindow::setupStatusBar()
                                QSizePolicy::Fixed);
     //: The search bar.
     m_searchBar->setPlaceholderText(_("Find/Filter (Perl Regex)"));
-    ui->statusBar->addPermanentWidget(m_searchBar);
+	statusBar->addPermanentWidget(m_searchBar);
 }
 
 void MainWindow::setupActions()
 {
-    connect(ui->actionAboutQt, &QAction::triggered, qApp,
+	connect(actionAboutQt, &QAction::triggered, qApp,
             &QApplication::aboutQt);
-    connect(ui->actionAboutScram, &QAction::triggered, this, [this] {
+	connect(actionAboutScram, &QAction::triggered, this, [this] {
         QString legal = QStringLiteral(
             "This program is distributed in the hope that it will be useful, "
             "but WITHOUT ANY WARRANTY; without even the implied warranty of "
@@ -365,33 +874,33 @@ void MainWindow::setupActions()
     });
 
     // File menu actions.
-    ui->actionExit->setShortcut(QKeySequence::Quit);
+	actionExit->setShortcut(QKeySequence::Quit);
 
-    ui->actionNewModel->setShortcut(QKeySequence::New);
-    connect(ui->actionNewModel, &QAction::triggered, this,
+	actionNewModel->setShortcut(QKeySequence::New);
+	connect(actionNewModel, &QAction::triggered, this,
             &MainWindow::createNewModel);
 
-    ui->actionOpenFiles->setShortcut(QKeySequence::Open);
-    connect(ui->actionOpenFiles, &QAction::triggered, this,
+	actionOpenFiles->setShortcut(QKeySequence::Open);
+	connect(actionOpenFiles, &QAction::triggered, this,
             [this] { openFiles(); });
 
-    ui->actionSave->setShortcut(QKeySequence::Save);
-    connect(ui->actionSave, &QAction::triggered, this, &MainWindow::saveModel);
+	actionSave->setShortcut(QKeySequence::Save);
+	connect(actionSave, &QAction::triggered, this, &MainWindow::saveModel);
 
-    ui->actionSaveAs->setShortcut(QKeySequence::SaveAs);
-    connect(ui->actionSaveAs, &QAction::triggered, this,
+	actionSaveAs->setShortcut(QKeySequence::SaveAs);
+	connect(actionSaveAs, &QAction::triggered, this,
             &MainWindow::saveModelAs);
 
-    ui->actionPrint->setShortcut(QKeySequence::Print);
+	actionPrint->setShortcut(QKeySequence::Print);
 
-    connect(ui->actionExportReportAs, &QAction::triggered, this,
+	connect(actionExportReportAs, &QAction::triggered, this,
             &MainWindow::exportReportAs);
 
-    QAction *menuRecentFilesStart = ui->menuRecentFiles->actions().front();
+	QAction *menuRecentFilesStart = menuRecentFiles->actions().front();
     for (QAction *&fileAction : m_recentFileActions) {
         fileAction = new QAction(this);
         fileAction->setVisible(false);
-        ui->menuRecentFiles->insertAction(menuRecentFilesStart, fileAction);
+		menuRecentFiles->insertAction(menuRecentFilesStart, fileAction);
         connect(fileAction, &QAction::triggered, this, [this, fileAction] {
             auto filePath = fileAction->text();
             GUI_ASSERT(!filePath.isEmpty(), );
@@ -399,18 +908,18 @@ void MainWindow::setupActions()
                 updateRecentFiles({filePath});
         });
     }
-    connect(ui->actionClearList, &QAction::triggered, this,
+	connect(actionClearList, &QAction::triggered, this,
             [this] { updateRecentFiles({}); });
 
     // View menu actions.
-    ui->actionZoomIn->setShortcut(QKeySequence::ZoomIn);
-    ui->actionZoomOut->setShortcut(QKeySequence::ZoomOut);
+	actionZoomIn->setShortcut(QKeySequence::ZoomIn);
+	actionZoomOut->setShortcut(QKeySequence::ZoomOut);
 
     // Edit menu actions.
-    ui->actionRemoveElement->setShortcut(QKeySequence::Delete);
-    connect(ui->actionAddElement, &QAction::triggered, this,
+	actionRemoveElement->setShortcut(QKeySequence::Delete);
+	connect(actionAddElement, &QAction::triggered, this,
             &MainWindow::addElement);
-    connect(ui->actionRenameModel, &QAction::triggered, this, [this] {
+	connect(actionRenameModel, &QAction::triggered, this, [this] {
         NameDialog nameDialog(this);
         if (!m_model->HasDefaultName())
             nameDialog.nameLine->setText(m_guiModel->id());
@@ -422,7 +931,7 @@ void MainWindow::setupActions()
             }
         }
     });
-    connect(ui->actionPreferences, &QAction::triggered, this, [this] {
+	connect(actionPreferences, &QAction::triggered, this, [this] {
         PreferencesDialog dialog(&m_preferences, m_undoStack, m_autoSaveTimer,
                                  this);
         dialog.exec();
@@ -437,12 +946,12 @@ void MainWindow::setupActions()
     m_redoAction->setShortcut(QKeySequence::Redo);
     m_redoAction->setIcon(QIcon::fromTheme(QStringLiteral("edit-redo")));
 
-    ui->menuEdit->insertAction(ui->menuEdit->actions().front(), m_redoAction);
-    ui->menuEdit->insertAction(m_redoAction, m_undoAction);
-    ui->editToolBar->insertAction(ui->editToolBar->actions().front(),
+	menuEdit->insertAction(menuEdit->actions().front(), m_redoAction);
+	menuEdit->insertAction(m_redoAction, m_undoAction);
+	editToolBar->insertAction(editToolBar->actions().front(),
                                   m_redoAction);
-    ui->editToolBar->insertAction(m_redoAction, m_undoAction);
-    connect(m_undoStack, &QUndoStack::cleanChanged, ui->actionSave,
+	editToolBar->insertAction(m_redoAction, m_undoAction);
+	connect(m_undoStack, &QUndoStack::cleanChanged, actionSave,
             &QAction::setDisabled);
     connect(m_undoStack, &QUndoStack::cleanChanged,
             [this](bool clean) { setWindowModified(!clean); });
@@ -468,61 +977,61 @@ void MainWindow::setupActions()
     // QTBUG-15746: QKeySequence::PreviousChild does not work.
     prevTab->setShortcut(Qt::CTRL | Qt::Key_Backtab);
 
-    ui->tabWidget->addAction(closeCurrentTab);
-    ui->tabWidget->addAction(nextTab);
-    ui->tabWidget->addAction(prevTab);
+//	tabWidget->addAction(closeCurrentTab);
+//	tabWidget->addAction(nextTab);
+//	tabWidget->addAction(prevTab);
 
-    auto switchTab = [this](bool toNext) {
-        int numTabs = ui->tabWidget->count();
-        if (!numTabs)
-            return;
-        int currentIndex = ui->tabWidget->currentIndex();
-        int nextIndex = [currentIndex, numTabs, toNext] {
-            int ret = currentIndex + (toNext ? 1 : -1);
-            if (ret < 0)
-                return numTabs - 1;
-            if (ret >= numTabs)
-                return 0;
-            return ret;
-        }();
-        ui->tabWidget->setCurrentIndex(nextIndex);
-    };
+//    auto switchTab = [this](bool toNext) {
+//		int numTabs = tabWidget->count();
+//        if (!numTabs)
+//            return;
+//		int currentIndex = tabWidget->currentIndex();
+//        int nextIndex = [currentIndex, numTabs, toNext] {
+//            int ret = currentIndex + (toNext ? 1 : -1);
+//            if (ret < 0)
+//                return numTabs - 1;
+//            if (ret >= numTabs)
+//                return 0;
+//            return ret;
+//        }();
+//		tabWidget->setCurrentIndex(nextIndex);
+//    };
 
-    connect(closeCurrentTab, &QAction::triggered, ui->tabWidget,
-            [this] { MainWindow::closeTab(ui->tabWidget->currentIndex()); });
-    connect(nextTab, &QAction::triggered, ui->tabWidget,
-            [switchTab] { switchTab(true); });
-    connect(prevTab, &QAction::triggered, ui->tabWidget,
-            [switchTab] { switchTab(false); });
+//	connect(closeCurrentTab, &QAction::triggered, tabWidget,
+//			[this] { MainWindow::closeTab(tabWidget->currentIndex()); });
+//	connect(nextTab, &QAction::triggered, tabWidget,
+//            [switchTab] { switchTab(true); });
+//	connect(prevTab, &QAction::triggered, tabWidget,
+//            [switchTab] { switchTab(false); });
 }
 
 void MainWindow::setupConnections()
 {
-    connect(ui->modelTree, &QTreeView::activated, this,
+	connect(modelTree, &QTreeView::activated, this,
             &MainWindow::activateModelTree);
-    connect(ui->reportTree, &QTreeView::activated, this,
+	connect(reportTree, &QTreeView::activated, this,
             &MainWindow::activateReportTree);
-    connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this,
-            &MainWindow::closeTab);
+//	connect(tabWidget, &QTabWidget::tabCloseRequested, this,
+//            &MainWindow::closeTab);
 
-    connect(ui->actionSettings, &QAction::triggered, this, [this] {
+	connect(actionSettings, &QAction::triggered, this, [this] {
         SettingsDialog dialog(m_settings, this);
         if (dialog.exec() == QDialog::Accepted)
             m_settings = dialog.settings();
     });
-    connect(ui->actionRun, &QAction::triggered, this, &MainWindow::runAnalysis);
+	connect(actionRun, &QAction::triggered, this, &MainWindow::runAnalysis);
 
     connect(this, &MainWindow::projectChanged, [this] {
         m_undoStack->clear();
         setWindowTitle(QStringLiteral("%1[*]").arg(getModelNameForTitle()));
-        ui->actionSaveAs->setEnabled(true);
-        ui->actionAddElement->setEnabled(true);
-        ui->actionRenameModel->setEnabled(true);
-        ui->actionRun->setEnabled(true);
+		actionSaveAs->setEnabled(true);
+		actionAddElement->setEnabled(true);
+		actionRenameModel->setEnabled(true);
+		actionRun->setEnabled(true);
         resetModelTree();
         resetReportTree(nullptr);
     });
-    connect(m_undoStack, &QUndoStack::indexChanged, ui->reportTree, [this] {
+	connect(m_undoStack, &QUndoStack::indexChanged, reportTree, [this] {
         if (m_analysis)
             resetReportTree(nullptr);
     });
@@ -570,18 +1079,23 @@ void MainWindow::savePreferences()
 
 void MainWindow::setupStartPage()
 {
-    auto *startPage = new StartPage(this);
+	auto* dock = new KDDockWidgets::DockWidget(QStringLiteral("StartPage"));
+
+	auto *startPage = new StartPage(dock);
     QString examplesDir =
         QString::fromStdString(env::install_dir() + "/share/scram/input");
     startPage->exampleModelsButton->setEnabled(QDir(examplesDir).exists());
     connect(startPage->newModelButton, &QAbstractButton::clicked,
-            ui->actionNewModel, &QAction::trigger);
+			actionNewModel, &QAction::trigger);
     connect(startPage->openModelButton, &QAbstractButton::clicked,
-            ui->actionOpenFiles, &QAction::trigger);
+			actionOpenFiles, &QAction::trigger);
     connect(startPage->exampleModelsButton, &QAbstractButton::clicked, this,
             [this, examplesDir] { openFiles(examplesDir); });
-    ui->tabWidget->addTab(startPage, startPage->windowIcon(),
-                          startPage->windowTitle());
+
+	dock->setTitle(startPage->windowTitle());
+	dock->setIcon(startPage->windowIcon());
+	dock->setWidget(startPage);
+	newDockWidget(dock, KDDockWidgets::Location_OnRight);
 
     startPage->recentFilesBox->setVisible(
         m_recentFileActions.front()->isVisible());
@@ -694,7 +1208,7 @@ bool MainWindow::saveToFile(std::string destination)
 
 void MainWindow::updateRecentFiles(QStringList filePaths)
 {
-    ui->menuRecentFiles->setEnabled(!filePaths.empty());
+	menuRecentFiles->setEnabled(!filePaths.empty());
     if (filePaths.empty()) {
         for (QAction *fileAction : m_recentFileActions)
             fileAction->setVisible(false);
@@ -749,19 +1263,19 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::closeTab(int index)
 {
-    if (index < 0)
-        return;
-    // Ensure show/hide order.
-    if (index == ui->tabWidget->currentIndex()) {
-        int num_tabs = ui->tabWidget->count();
-        if (num_tabs > 1) {
-            ui->tabWidget->setCurrentIndex(index == (num_tabs - 1) ? index - 1
-                                                                   : index + 1);
-        }
-    }
-    auto *widget = ui->tabWidget->widget(index);
-    ui->tabWidget->removeTab(index);
-    delete widget;
+//    if (index < 0)
+//        return;
+//    // Ensure show/hide order.
+//	if (index == tabWidget->currentIndex()) {
+//		int num_tabs = tabWidget->count();
+//        if (num_tabs > 1) {
+//			tabWidget->setCurrentIndex(index == (num_tabs - 1) ? index - 1
+//                                                                   : index + 1);
+//        }
+//    }
+//	auto *widget = tabWidget->widget(index);
+//	tabWidget->removeTab(index);
+//    delete widget;
 }
 
 void MainWindow::runAnalysis()
@@ -819,11 +1333,11 @@ void MainWindow::setupZoomableView(ZoomableView *view)
         {
             auto setEnabled = [this](bool state) {
                 m_window->m_zoomBox->setEnabled(state);
-                m_window->ui->actionZoomIn->setEnabled(state);
-                m_window->ui->actionZoomIn->setEnabled(state);
-                m_window->ui->actionZoomOut->setEnabled(state);
-                m_window->ui->actionBestFit->setEnabled(state);
-                m_window->ui->menuZoom->setEnabled(state);
+				m_window->actionZoomIn->setEnabled(state);
+				m_window->actionZoomIn->setEnabled(state);
+				m_window->actionZoomOut->setEnabled(state);
+				m_window->actionBestFit->setEnabled(state);
+				m_window->menuZoom->setEnabled(state);
             };
 
             if (event->type() == QEvent::Show) {
@@ -850,20 +1364,20 @@ void MainWindow::setupZoomableView(ZoomableView *view)
                             text.remove(QLatin1Char('%'));
                             m_zoomable->setZoom(text.toInt());
                         });
-                connect(m_window->ui->actionZoomIn, &QAction::triggered,
+				connect(m_window->actionZoomIn, &QAction::triggered,
                         m_zoomable, [this] { m_zoomable->zoomIn(5); });
-                connect(m_window->ui->actionZoomOut, &QAction::triggered,
+				connect(m_window->actionZoomOut, &QAction::triggered,
                         m_zoomable, [this] { m_zoomable->zoomOut(5); });
-                connect(m_window->ui->actionBestFit, &QAction::triggered,
+				connect(m_window->actionBestFit, &QAction::triggered,
                         m_zoomable, &ZoomableView::zoomBestFit);
             } else if (event->type() == QEvent::Hide) {
                 setEnabled(false);
                 disconnect(m_window->m_zoomBox->lineEdit(), 0, m_zoomable, 0);
                 disconnect(m_zoomable, 0, m_window->m_zoomBox, 0);
                 disconnect(m_window->m_zoomBox, 0, m_zoomable, 0);
-                disconnect(m_window->ui->actionZoomIn, 0, m_zoomable, 0);
-                disconnect(m_window->ui->actionZoomOut, 0, m_zoomable, 0);
-                disconnect(m_window->ui->actionBestFit, 0, m_zoomable, 0);
+				disconnect(m_window->actionZoomIn, 0, m_zoomable, 0);
+				disconnect(m_window->actionZoomOut, 0, m_zoomable, 0);
+				disconnect(m_window->actionBestFit, 0, m_zoomable, 0);
             }
             return QObject::eventFilter(object, event);
         }
@@ -886,19 +1400,19 @@ void MainWindow::setupPrintableView(T *view)
         bool eventFilter(QObject *object, QEvent *event) override
         {
             auto setEnabled = [this](bool state) {
-                m_window->ui->actionPrint->setEnabled(state);
-                m_window->ui->actionPrintPreview->setEnabled(state);
+				m_window->actionPrint->setEnabled(state);
+				m_window->actionPrintPreview->setEnabled(state);
             };
             if (event->type() == QEvent::Show) {
                 setEnabled(true);
-                connect(m_window->ui->actionPrint, &QAction::triggered,
+				connect(m_window->actionPrint, &QAction::triggered,
                         m_printable, [this] { m_printable->print(); });
-                connect(m_window->ui->actionPrintPreview, &QAction::triggered,
+				connect(m_window->actionPrintPreview, &QAction::triggered,
                         m_printable, [this] { m_printable->printPreview(); });
             } else if (event->type() == QEvent::Hide) {
                 setEnabled(false);
-                disconnect(m_window->ui->actionPrint, 0, m_printable, 0);
-                disconnect(m_window->ui->actionPrintPreview, 0, m_printable, 0);
+				disconnect(m_window->actionPrint, 0, m_printable, 0);
+				disconnect(m_window->actionPrintPreview, 0, m_printable, 0);
             }
             return QObject::eventFilter(object, event);
         }
@@ -922,12 +1436,12 @@ void MainWindow::setupExportableView(T *view)
         bool eventFilter(QObject *object, QEvent *event) override
         {
             if (event->type() == QEvent::Show) {
-                m_window->ui->actionExportAs->setEnabled(true);
-                connect(m_window->ui->actionExportAs, &QAction::triggered,
+				m_window->actionExportAs->setEnabled(true);
+				connect(m_window->actionExportAs, &QAction::triggered,
                         m_exportable, [this] { m_exportable->exportAs(); });
             } else if (event->type() == QEvent::Hide) {
-                m_window->ui->actionExportAs->setEnabled(false);
-                disconnect(m_window->ui->actionExportAs, 0, m_exportable, 0);
+				m_window->actionExportAs->setEnabled(false);
+				disconnect(m_window->actionExportAs, 0, m_exportable, 0);
             }
 
             return QObject::eventFilter(object, event);
@@ -1043,7 +1557,7 @@ void MainWindow::setupRemovable(QAbstractItemView *view)
 
         void react(const QModelIndexList &indexes)
         {
-            m_window->ui->actionRemoveElement->setEnabled(
+			m_window->actionRemoveElement->setEnabled(
                 !(indexes.empty() || indexes.front().parent().isValid()));
         }
 
@@ -1058,12 +1572,12 @@ void MainWindow::setupRemovable(QAbstractItemView *view)
                     });
                 connect(m_removable->selectionModel(),
                         &QItemSelectionModel::selectionChanged,
-                        m_window->ui->actionRemoveElement,
+						m_window->actionRemoveElement,
                         [this](const QItemSelection &selected) {
                             react(selected.indexes());
                         });
                 connect(
-                    m_window->ui->actionRemoveElement, &QAction::triggered,
+					m_window->actionRemoveElement, &QAction::triggered,
                     m_removable, [this] {
                         auto currentIndexes =
                             m_removable->selectionModel()->selectedIndexes();
@@ -1091,8 +1605,8 @@ void MainWindow::setupRemovable(QAbstractItemView *view)
                             element, m_window->getFaultTree(element->data()));
                     });
             } else if (event->type() == QEvent::Hide) {
-                m_window->ui->actionRemoveElement->setEnabled(false);
-                disconnect(m_window->ui->actionRemoveElement, 0, m_removable,
+				m_window->actionRemoveElement->setEnabled(false);
+				disconnect(m_window->actionRemoveElement, 0, m_removable,
                            0);
             }
 
@@ -1471,14 +1985,19 @@ QAbstractItemView *MainWindow::constructElementTable<model::GateContainerModel>(
 
 void MainWindow::resetModelTree()
 {
-    while (ui->tabWidget->count()) {
-        auto *widget = ui->tabWidget->widget(0);
-        ui->tabWidget->removeTab(0);
-        delete widget;
-    }
+	int index = 0;
+	const int count = m_docks.count();
+	while (m_docks.count() > 0 && index < count) {
+		const QString name = m_docks.at(index)->uniqueName();
+		if (name.contains(_("Gates")) || name.contains(_("Basic Events")) || name.contains(_("House Events")) || name.contains(_("Fault Tree:")))
+			removeDockWidget(m_docks.at(index));
+		else
+			index++;
+	}
+
     m_guiModel = std::make_unique<model::Model>(m_model.get());
-    auto *oldModel = ui->modelTree->model();
-    ui->modelTree->setModel(new ModelTree(m_guiModel.get(), this));
+	auto *oldModel = modelTree->model();
+	modelTree->setModel(new ModelTree(m_guiModel.get(), this));
     delete oldModel;
 
     connect(m_guiModel.get(), &model::Model::modelNameChanged, this, [this] {
@@ -1487,13 +2006,14 @@ void MainWindow::resetModelTree()
 }
 
 bool MainWindow::activateTab(const QString& title) {
-	for (int i=0; i < ui->tabWidget->count(); i++) {
-		if (ui->tabWidget->tabText(i) == title) {
-			ui->tabWidget->setCurrentIndex(i);
-			return true;
-		}
-	}
 	return false;
+//	for (int i=0; i < tabWidget->count(); i++) {
+//		if (tabWidget->tabText(i) == title) {
+//			tabWidget->setCurrentIndex(i);
+//			return true;
+//		}
+//	}
+//	return false;
 }
 
 void MainWindow::activateModelTree(const QModelIndex &index)
@@ -1505,35 +2025,41 @@ void MainWindow::activateModelTree(const QModelIndex &index)
 			const auto title = _("Gates");
 			if (activateTab(title))
 				return;
+			auto* dock = new KDDockWidgets::DockWidget(title);
             auto *table = constructElementTable<model::GateContainerModel>(
-                m_guiModel.get(), this);
+				m_guiModel.get(), dock);
             //: The tab for the table of gates.
-			ui->tabWidget->addTab(table, title);
-            ui->tabWidget->setCurrentWidget(table);
+			dock->setTitle(title);
+			dock->setWidget(table);
+			newDockWidget(dock, KDDockWidgets::Location_OnRight, nullptr, {}, true);
             return;
         }
         case ModelTree::Row::BasicEvents: {
 			const auto title = _("Basic Events");
 			if (activateTab(title))
 				return;
+			auto* dock = new KDDockWidgets::DockWidget(title);
             auto *table =
                 constructElementTable<model::BasicEventContainerModel>(
-                    m_guiModel.get(), this);
-            //: The tab for the table of basic events.
-			ui->tabWidget->addTab(table, title);
-            ui->tabWidget->setCurrentWidget(table);
+					m_guiModel.get(), dock);
+            //: The tab for the table of basic events.	
+			dock->setTitle(title);
+			dock->setWidget(table);
+			newDockWidget(dock, KDDockWidgets::Location_OnRight, nullptr, {}, true);
             return;
         }
         case ModelTree::Row::HouseEvents: {
 			const auto title = _("House Events");
 			if (activateTab(title))
 				return;
+			auto* dock = new KDDockWidgets::DockWidget(title);
             auto *table =
                 constructElementTable<model::HouseEventContainerModel>(
-                    m_guiModel.get(), this);
+					m_guiModel.get(), dock);
             //: The tab for the table of house events.
-			ui->tabWidget->addTab(table, title);
-            ui->tabWidget->setCurrentWidget(table);
+			dock->setTitle(title);
+			dock->setWidget(table);
+			newDockWidget(dock, KDDockWidgets::Location_OnRight, nullptr, {}, true);
             return;
         }
         case ModelTree::Row::FaultTrees:
@@ -1570,9 +2096,12 @@ void MainWindow::activateReportTree(const QModelIndex &index)
 		if (activateTab(title))
 			return;
         bool withProbability = result.probability_analysis != nullptr;
-        auto *table = constructTableView<model::ProductTableModel>(
-            this, result.fault_tree_analysis->products(), withProbability);
-		ui->tabWidget->addTab(table, title);
+		auto* dock = new KDDockWidgets::DockWidget(title);
+		auto* table = constructTableView<model::ProductTableModel>(
+			dock, result.fault_tree_analysis->products(), withProbability);
+		dock->setTitle(title);
+		dock->setWidget(table);
+		newDockWidget(dock, KDDockWidgets::Location_OnRight);
         table->sortByColumn(withProbability ? 2 : 1, withProbability
                                                          ? Qt::DescendingOrder
                                                          : Qt::AscendingOrder);
@@ -1586,9 +2115,12 @@ void MainWindow::activateReportTree(const QModelIndex &index)
 		const auto title = _("Importance: %1").arg(name);
 		if (activateTab(title))
 			return;
+		auto* dock = new KDDockWidgets::DockWidget(title);
         widget = constructTableView<model::ImportanceTableModel>(
-            this, &result.importance_analysis->importance());
-		ui->tabWidget->addTab(widget, title);
+			dock, &result.importance_analysis->importance());
+		dock->setTitle(title);
+		dock->setWidget(widget);
+		newDockWidget(dock, KDDockWidgets::Location_OnRight);
         break;
     }
     default:
@@ -1597,9 +2129,8 @@ void MainWindow::activateReportTree(const QModelIndex &index)
 
     if (!widget)
         return;
-    ui->tabWidget->setCurrentWidget(widget);
-    connect(ui->reportTree->model(), &QObject::destroyed, widget,
-            [this, widget] { closeTab(ui->tabWidget->indexOf(widget)); });
+//	connect(reportTree->model(), &QObject::destroyed, widget,
+//			[this, widget] { closeTab(tabWidget->indexOf(widget)); });
 }
 
 void MainWindow::activateFaultTreeDiagram(mef::FaultTree *faultTree)
@@ -1612,7 +2143,8 @@ void MainWindow::activateFaultTreeDiagram(mef::FaultTree *faultTree)
 		return;
 
     auto *topGate = faultTree->top_events().front();
-    auto *view = new DiagramView(this);
+	auto* dock = new KDDockWidgets::DockWidget(title);
+	auto *view = new DiagramView(dock);
     auto *scene = new diagram::DiagramScene(
         m_guiModel->gates().find(topGate)->get(), m_guiModel.get(), view);
     view->setScene(scene);
@@ -1624,11 +2156,11 @@ void MainWindow::activateFaultTreeDiagram(mef::FaultTree *faultTree)
     setupZoomableView(view);
     setupPrintableView(view);
     setupExportableView(view);
-    ui->tabWidget->addTab(
-        view,
-        //: The tab for a fault tree diagram.
-		title);
-    ui->tabWidget->setCurrentWidget(view);
+
+	//: The dock for a fault tree diagram.
+	dock->setTitle(title);
+	dock->setWidget(view);
+	newDockWidget(dock, KDDockWidgets::Location_OnRight, nullptr, {}, true);
 
     connect(scene, &diagram::DiagramScene::activated, this,
             [this](model::Element *element) {
@@ -1653,20 +2185,54 @@ void MainWindow::activateFaultTreeDiagram(mef::FaultTree *faultTree)
     connect(m_guiModel.get(),
             qOverload<mef::FaultTree *>(&model::Model::removed), view,
             [this, faultTree, view](mef::FaultTree *removedTree) {
-                if (removedTree == faultTree)
-                    closeTab(ui->tabWidget->indexOf(view));
+//                if (removedTree == faultTree)
+//					closeTab(tabWidget->indexOf(view));
             });
 }
 
 void MainWindow::resetReportTree(std::unique_ptr<core::RiskAnalysis> analysis)
 {
-    ui->actionExportReportAs->setEnabled(static_cast<bool>(analysis));
+	actionExportReportAs->setEnabled(static_cast<bool>(analysis));
 
-    auto *oldModel = ui->reportTree->model();
-    ui->reportTree->setModel(
+	auto *oldModel = reportTree->model();
+	reportTree->setModel(
         analysis ? new ReportTree(&analysis->results(), this) : nullptr);
     delete oldModel;
     m_analysis = std::move(analysis);
+}
+
+void MainWindow::newDockWidget(KDDockWidgets::DockWidgetBase *dockWidget,
+								   KDDockWidgets::Location location,
+								   KDDockWidgets::DockWidgetBase *relativeTo,
+				   KDDockWidgets::InitialOption initialOption, bool useLastDock)
+{
+	m_docks << dockWidget;
+	if (useLastDock)
+		relativeTo = m_dockLastAdded;
+	addDockWidget(dockWidget, location, relativeTo, initialOption);
+	m_dockLastAdded = dockWidget;
+}
+
+void MainWindow::removeDockWidget(const QString& contains) {
+	for (int i=0; i < m_docks.count(); i++) {
+		if (m_docks.at(i)->uniqueName().contains(contains)) {
+			if (m_dockLastAdded == m_docks.at(i))
+				m_dockLastAdded = nullptr;
+			m_docks.takeAt(i)->close();
+			break;
+		}
+	}
+}
+
+void MainWindow::removeDockWidget(KDDockWidgets::DockWidgetBase *dockWidget) {
+	if (m_dockLastAdded == dockWidget)
+		m_dockLastAdded = nullptr;
+	for (int i=0; i < m_docks.count(); i++) {
+		if (m_docks.at(i) == dockWidget) {
+			m_docks.takeAt(i)->close();
+			break;
+		}
+	}
 }
 
 } // namespace scram::gui
